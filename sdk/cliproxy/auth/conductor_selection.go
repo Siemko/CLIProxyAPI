@@ -73,7 +73,7 @@ func (m *Manager) PluginSchedulerWantsAcrossPriorities() bool {
 
 func isBuiltInSelector(selector Selector) bool {
 	switch selector.(type) {
-	case *RoundRobinSelector, *WeightedRoundRobinSelector, *FillFirstSelector:
+	case *RoundRobinSelector, *WeightedRoundRobinSelector, *FillFirstSelector, *SoonestResetFirstSelector:
 		return true
 	default:
 		return false
@@ -2200,7 +2200,9 @@ func (m *Manager) useSchedulerFastPath() bool {
 	if m == nil || m.scheduler == nil {
 		return false
 	}
-	return isBuiltInSelector(m.Selector())
+	// Observation-driven selectors must read current manager snapshots, not the
+	// cached scheduler views, which only implement static ordering strategies.
+	return selectorStrategy(m.Selector()) != schedulerStrategyCustom
 }
 
 func shouldRetrySchedulerPick(err error) bool {

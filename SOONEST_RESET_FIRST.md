@@ -1,7 +1,8 @@
 # Soonest-reset-first routing
 
-Local addition, currently based on CLIProxyAPI v8.0.52 (6e6afab9).
-Originally written against v8.0.43 (30780351); re-applied cleanly on v8.0.52.
+Local addition, currently based on CLIProxyAPI v8.0.57 (c2f402b4).
+Originally written against v8.0.43 (30780351); re-applied cleanly on v8.0.52
+and v8.0.57, including the quota-availability improvements.
 
 ```yaml
 routing:
@@ -85,22 +86,29 @@ rather than assuming a full five-hour window.
 
 ## Local installation
 
-The 2026-11-04 improvements are deployed as
-`8.0.52-soonest-reset-first-improved`. The systemd user service runs
-`~/.local/bin/cli-proxy-api-reset-first` with the existing private configuration
-and credential directory. The installed and running binary both have SHA-256
+The 2026-11-05 upstream update is deployed as
+`8.0.57-soonest-reset-first-improved`, built from `8f96680f`. The systemd user
+service runs `~/.local/bin/cli-proxy-api-reset-first` with the existing private
+configuration and credential directory, unchanged by this update. The installed
+and running binary both have SHA-256
+`06d5d9853a8362948ed37c18b877a94ff9fdab7063a93cea7270ac165aaf03ce`.
+The previous binary is preserved as
+`~/.local/bin/cli-proxy-api-reset-first.before-v8.0.57-20261105T211844319532Z`.
+
+The previous 2026-11-04 improvements were deployed as
+`8.0.52-soonest-reset-first-improved`. At that deployment the binary had SHA-256
 `b8af6e80e288fb8cb0fce919dbdd80848bb93989e00634b751380089111a0728`.
 The pre-upgrade binary is preserved as
 `~/.local/bin/cli-proxy-api-reset-first.before-quota-improvements-20261104-160635-543514`.
 
-Source: `~/Projects/CLIProxyAPI`, branch `soonest-reset-first-v8.0.52`
+Source: `~/Projects/CLIProxyAPI`, branch `soonest-reset-first-v8.0.57`
 (the routing addition and subsequent improvements on top of the upstream tag;
 the v8.0.43 version is on branch `soonest-reset-first`).
 The previous binary is kept as `~/.local/bin/cli-proxy-api-reset-first.v8.0.43`.
 Custom binary: `~/.local/bin/cli-proxy-api-reset-first`.
 Service override: `~/.config/systemd/user/cli-proxy-api.service.d/soonest-reset-first.conf`.
 The package-managed `/usr/bin/cli-proxy-api` is not replaced. Package upgrades
-will not update the custom build; rebase/rebuild this branch to pick up upstream
+will not update the custom build; update/rebuild this branch to pick up upstream
 changes.
 
 ## GitHub fork and synchronization
@@ -109,7 +117,9 @@ Fork: [Siemko/CLIProxyAPI](https://github.com/Siemko/CLIProxyAPI).
 
 - `origin`: `git@github.com:Siemko/CLIProxyAPI.git` (personal fork, push destination).
 - `upstream`: `https://github.com/router-for-me/CLIProxyAPI.git` (original project).
-- Custom branch: `soonest-reset-first-v8.0.52`, tracking its counterpart on `origin`.
+- Current local branch: `soonest-reset-first-v8.0.57`.
+- Previous published branch: `soonest-reset-first-v8.0.52`, tracking its counterpart
+  on `origin`. The v8.0.57 update preserves that branch unchanged.
 - Keep runtime configuration, client keys and OAuth credentials outside this
   repository. Publish source, tests and this operational guide only.
 
@@ -125,7 +135,7 @@ To move to a newer upstream tag:
 ```sh
 git fetch upstream --tags
 git switch -c soonest-reset-first-vX.Y.Z vX.Y.Z
-git cherry-pick v8.0.52..soonest-reset-first-v8.0.52
+git cherry-pick v8.0.57..soonest-reset-first-v8.0.57
 git push -u origin HEAD
 ```
 
@@ -147,6 +157,32 @@ The pre-activation configuration is backed up at
 `~/.cli-proxy-api/config.yaml.before-soonest-reset-first-20261026`.
 
 ## Validation
+
+2026-11-05 upstream update: both routing commits applied cleanly to v8.0.57.
+The server candidate builds with Go 1.26.10; custom Go files are already gofmt
+clean. The full auth and management package suites passed, and the full service
+package suite passed on rerun. Focused subscription-reset and soonest-reset-first
+tests passed 10 runs with `-race`.
+
+The initial service suite hit
+`TestServiceHeartbeatFailoverDoesNotDrainBlockingScope` (replacement subscription
+missed its one-second deadline). The focused test passed three custom-build
+reruns, while 10 runs on untouched upstream v8.0.57 reproduced the same failure
+twice. No changes were made to that unrelated Home timing test or implementation.
+
+The full `go test -p 1 ./...` run failed only in
+`TestInPlaceByteWritesAreReviewed` (the new upstream `internal/kvstore/bolt_store.go`
+copy is absent from its review allowlist) and
+`TestResponsesInterruptStopsHTTPUpstream` (upstream cancellation timing). Both
+failures were reproduced on untouched upstream v8.0.57. The service package
+passed in the full run. These upstream tests and implementations are unchanged.
+
+Deployment verification: the systemd user service is active on `127.0.0.1:8317`,
+running the validated candidate with zero automatic restarts. Four credential
+entries loaded; soonest-reset-first and one-hour session affinity remain enabled.
+The authenticated `/v1/models` endpoint returned HTTP 200 with 37 models, retaining
+all 34 models from immediately before the restart. The configuration checksum is
+unchanged. No paid generation was used for this smoke check.
 
 2026-11-04 review: the full `sdk/cliproxy/auth`, `sdk/cliproxy` and
 `internal/api/handlers/management` package suites passed with `GOMAXPROCS=4`

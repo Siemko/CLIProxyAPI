@@ -26,3 +26,24 @@ func TestSoonestResetFirstRoutingSelector(t *testing.T) {
 		}
 	}
 }
+
+func TestSoonestResetFirstRoutingSelectorAffinityRebindModes(t *testing.T) {
+	for _, mode := range []string{coreauth.SessionAffinityRebindOnAny, coreauth.SessionAffinityRebindOnQuota, coreauth.SessionAffinityRebindOnNever} {
+		t.Run(mode, func(t *testing.T) {
+			cfg := &internalconfig.Config{Routing: internalconfig.RoutingConfig{
+				Strategy:                "soonest-reset-first",
+				SessionAffinity:         true,
+				SessionAffinityRebindOn: mode,
+			}}
+			state := normalizedRoutingRuntimeState(cfg)
+			if state.sessionAffinityRebindOn != mode {
+				t.Fatalf("rebind mode = %q, want %q", state.sessionAffinityRebindOn, mode)
+			}
+			selector, ok := newRoutingSelector(state).(*coreauth.SessionAffinitySelector)
+			if !ok {
+				t.Fatal("expected session affinity selector")
+			}
+			t.Cleanup(selector.Stop)
+		})
+	}
+}

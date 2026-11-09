@@ -1,8 +1,8 @@
 # Soonest-reset-first routing
 
-Local addition, currently based on CLIProxyAPI v8.0.57 (c2f402b4).
+Local addition, currently based on CLIProxyAPI v8.0.61 (681ce41b).
 Originally written against v8.0.43 (30780351); re-applied cleanly on v8.0.52
-and v8.0.57, including the quota-availability improvements.
+through v8.0.61, including the quota-availability improvements.
 
 ```yaml
 routing:
@@ -86,11 +86,21 @@ rather than assuming a full five-hour window.
 
 ## Local installation
 
-The 2026-11-05 upstream update is deployed as
+The 2026-11-09 upstream update is deployed as
+`8.0.61-soonest-reset-first-improved`, built from `e1486f06` on top of upstream
+v8.0.61 (`681ce41b`). The installed and running binary both have SHA-256
+`2498f06f4631f0ae7ae20bbea01c3a3ddafcc0d43c6e0e27d22d077fd9b45909`.
+The previous binary is preserved as
+`~/.local/bin/cli-proxy-api-reset-first.before-v8.0.61-20261109T103333493357Z`.
+The private configuration, credential directory, service override and packaged
+binary are unchanged. Additional affinity-compatibility regression tests accompany
+this deployment record.
+
+The previous 2026-11-05 upstream update was deployed as
 `8.0.57-soonest-reset-first-improved`, built from `8f96680f`. The systemd user
 service runs `~/.local/bin/cli-proxy-api-reset-first` with the existing private
-configuration and credential directory, unchanged by this update. The installed
-and running binary both have SHA-256
+configuration and credential directory, unchanged by that update. At deployment,
+the installed and running binary both had SHA-256
 `06d5d9853a8362948ed37c18b877a94ff9fdab7063a93cea7270ac165aaf03ce`.
 The previous binary is preserved as
 `~/.local/bin/cli-proxy-api-reset-first.before-v8.0.57-20261105T211844319532Z`.
@@ -101,7 +111,7 @@ The previous 2026-11-04 improvements were deployed as
 The pre-upgrade binary is preserved as
 `~/.local/bin/cli-proxy-api-reset-first.before-quota-improvements-20261104-160635-543514`.
 
-Source: `~/Projects/CLIProxyAPI`, branch `soonest-reset-first-v8.0.57`
+Source: `~/Projects/CLIProxyAPI`, branch `soonest-reset-first-v8.0.61`
 (the routing addition and subsequent improvements on top of the upstream tag;
 the v8.0.43 version is on branch `soonest-reset-first`).
 The previous binary is kept as `~/.local/bin/cli-proxy-api-reset-first.v8.0.43`.
@@ -117,9 +127,10 @@ Fork: [Siemko/CLIProxyAPI](https://github.com/Siemko/CLIProxyAPI).
 
 - `origin`: `git@github.com:Siemko/CLIProxyAPI.git` (personal fork, push destination).
 - `upstream`: `https://github.com/router-for-me/CLIProxyAPI.git` (original project).
-- Current local branch: `soonest-reset-first-v8.0.57`.
+- Current local branch: `soonest-reset-first-v8.0.61`.
+- Previous local branch: `soonest-reset-first-v8.0.57`, preserved unchanged.
 - Previous published branch: `soonest-reset-first-v8.0.52`, tracking its counterpart
-  on `origin`. The v8.0.57 update preserves that branch unchanged.
+  on `origin`. Subsequent updates preserve that branch unchanged.
 - Keep runtime configuration, client keys and OAuth credentials outside this
   repository. Publish source, tests and this operational guide only.
 
@@ -135,7 +146,7 @@ To move to a newer upstream tag:
 ```sh
 git fetch upstream --tags
 git switch -c soonest-reset-first-vX.Y.Z vX.Y.Z
-git cherry-pick v8.0.57..soonest-reset-first-v8.0.57
+git cherry-pick v8.0.61..soonest-reset-first-v8.0.61
 git push -u origin HEAD
 ```
 
@@ -157,6 +168,25 @@ The pre-activation configuration is backed up at
 `~/.cli-proxy-api/config.yaml.before-soonest-reset-first-20261026`.
 
 ## Validation
+
+2026-11-09 upstream update: both routing commits applied cleanly to v8.0.61.
+The server builds with Go 1.26.10, all Go files are gofmt clean, and `go vet`
+passes for the auth, service and config packages. Auth, service and management
+package suites pass. Focused reset and routing tests pass 10 runs with `-race`,
+including new regression coverage for upstream's `session-affinity-rebind-on:
+never` mode and all three affinity rebind modes in runtime configuration.
+
+The full `go test -p 1 ./...` run failed only in
+`TestResponsesInterruptStopsHTTPUpstream` ("http upstream was not canceled").
+Ten focused runs on untouched upstream v8.0.61 reproduced the same failure five
+times. No changes were made to that unrelated test or its implementation.
+
+Deployment verification: the service is active on `127.0.0.1:8317`, running the
+validated candidate with zero automatic restarts and all four credential entries
+loaded. The authenticated `/v1/models` endpoint returned HTTP 200 with all 37
+previously available models. The configuration checksum is unchanged;
+`soonest-reset-first` and one-hour session affinity remain enabled. The smoke
+check did not issue a generation request.
 
 2026-11-05 upstream update: both routing commits applied cleanly to v8.0.57.
 The server candidate builds with Go 1.26.10; custom Go files are already gofmt

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 	"sync"
@@ -183,6 +184,50 @@ func TestSoonestResetFirstSelectorKeepsAffinity(t *testing.T) {
 	b.Quota = resetTestAuth("", now.Add(30*time.Minute)).Quota
 	pick("old-session", "a")
 	pick("new-session", "b")
+}
+
+func TestSoonestResetFirstManagerNeverRebindsUnavailableSession(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now()
+	selector := NewSessionAffinitySelectorWithConfig(SessionAffinityConfig{
+		Fallback: &SoonestResetFirstSelector{},
+		RebindOn: SessionAffinityRebindOnNever,
+	})
+	t.Cleanup(selector.Stop)
+	manager := NewManager(nil, selector, nil)
+	manager.RegisterExecutor(schedulerProviderTestExecutor{provider: "claude"})
+	if manager.useSchedulerFastPath() {
+		t.Fatal("affinity-wrapped reset strategy must use live snapshots")
+	}
+	soon := resetTestAuth("reset-never-soon", now.Add(time.Hour))
+	later := resetTestAuth("reset-never-later", now.Add(24*time.Hour))
+	const model = "reset-never-model"
+	for _, a := range []*Auth{soon, later} {
+		registry.GetGlobalRegistry().RegisterClient(a.ID, "claude", []*registry.ModelInfo{{ID: model}})
+		t.Cleanup(func() { registry.GetGlobalRegistry().UnregisterClient(a.ID) })
+		if _, err := manager.Register(ctx, a); err != nil {
+			t.Fatal(err)
+		}
+	}
+	opts := cliproxyexecutor.Options{OriginalRequest: []byte(`{"conversation_id":"reset-never-session"}`)}
+	got, err := manager.SelectAuth(ctx, "claude", model, opts)
+	if err != nil || got == nil || got.ID != soon.ID {
+		t.Fatalf("initial pick = %v, %v; want %s", got, err, soon.ID)
+	}
+	soon.Disabled = true
+	if _, err := manager.Update(ctx, soon); err != nil {
+		t.Fatal(err)
+	}
+	got, err = manager.SelectAuth(ctx, "claude", model, opts)
+	var authErr *Error
+	if got != nil || !errors.As(err, &authErr) || authErr.Code != "session_auth_unavailable" {
+		t.Fatalf("bound pick = %v, %v; want session_auth_unavailable", got, err)
+	}
+	opts.OriginalRequest = []byte(`{"conversation_id":"reset-never-new-session"}`)
+	got, err = manager.SelectAuth(ctx, "claude", model, opts)
+	if err != nil || got == nil || got.ID != later.ID {
+		t.Fatalf("new session pick = %v, %v; want %s", got, err, later.ID)
+	}
 }
 
 func TestSoonestResetFirstSelectorStableTies(t *testing.T) {

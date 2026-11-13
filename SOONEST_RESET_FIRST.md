@@ -1,8 +1,8 @@
 # Soonest-reset-first routing
 
-Local addition, currently based on CLIProxyAPI v8.0.61 (681ce41b).
+Local addition, currently based on CLIProxyAPI v8.0.69 (f7ae8fee).
 Originally written against v8.0.43 (30780351); re-applied cleanly on v8.0.52
-through v8.0.61, including the quota-availability improvements.
+through v8.0.69, including the quota-availability improvements.
 
 ```yaml
 routing:
@@ -111,7 +111,7 @@ The previous 2026-11-04 improvements were deployed as
 The pre-upgrade binary is preserved as
 `~/.local/bin/cli-proxy-api-reset-first.before-quota-improvements-20261104-160635-543514`.
 
-Source: `~/Projects/CLIProxyAPI`, branch `soonest-reset-first-v8.0.61`
+Source: `~/Projects/CLIProxyAPI`, branch `soonest-reset-first-v8.0.69`
 (the routing addition and subsequent improvements on top of the upstream tag;
 the v8.0.43 version is on branch `soonest-reset-first`).
 The previous binary is kept as `~/.local/bin/cli-proxy-api-reset-first.v8.0.43`.
@@ -127,10 +127,9 @@ Fork: [Siemko/CLIProxyAPI](https://github.com/Siemko/CLIProxyAPI).
 
 - `origin`: `git@github.com:Siemko/CLIProxyAPI.git` (personal fork, push destination).
 - `upstream`: `https://github.com/router-for-me/CLIProxyAPI.git` (original project).
-- Current local branch: `soonest-reset-first-v8.0.61`.
-- Previous local branch: `soonest-reset-first-v8.0.57`, preserved unchanged.
-- Previous published branch: `soonest-reset-first-v8.0.52`, tracking its counterpart
-  on `origin`. Subsequent updates preserve that branch unchanged.
+- Current custom branch: `soonest-reset-first-v8.0.69`.
+- Previous custom branch: `soonest-reset-first-v8.0.61`, preserved unchanged,
+  tracking its counterpart on `origin`. Older custom branches are also preserved.
 - Keep runtime configuration, client keys and OAuth credentials outside this
   repository. Publish source, tests and this operational guide only.
 
@@ -146,7 +145,7 @@ To move to a newer upstream tag:
 ```sh
 git fetch upstream --tags
 git switch -c soonest-reset-first-vX.Y.Z vX.Y.Z
-git cherry-pick v8.0.61..soonest-reset-first-v8.0.61
+git cherry-pick v8.0.69..soonest-reset-first-v8.0.69
 git push -u origin HEAD
 ```
 
@@ -154,7 +153,7 @@ Then build:
 
 ```sh
 go test ./sdk/cliproxy/auth ./sdk/cliproxy ./internal/api/handlers/management
-go build -trimpath -ldflags="-s -w -X 'main.Version=X.Y.Z-soonest-reset-first' -X 'main.Commit=<sha>+local-reset-routing'" -o /tmp/opencode/cli-proxy-api-reset-first ./cmd/server
+go build -trimpath -ldflags="-s -w -X 'main.Version=X.Y.Z-soonest-reset-first-improved' -X 'main.Commit=<sha>+local-reset-routing'" -o /tmp/opencode/cli-proxy-api-reset-first ./cmd/server
 install -m755 /tmp/opencode/cli-proxy-api-reset-first ~/.local/bin/cli-proxy-api-reset-first
 systemctl --user restart cli-proxy-api
 ```

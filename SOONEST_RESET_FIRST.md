@@ -86,7 +86,18 @@ rather than assuming a full five-hour window.
 
 ## Local installation
 
-The 2026-11-09 upstream update is deployed as
+The 2026-11-13 upstream update is deployed as
+`8.0.69-soonest-reset-first-improved`, built with Go 1.26.11 from `21a57dec`
+on top of upstream v8.0.69 (`f7ae8fee`). The installed and running binary both
+have SHA-256
+`3ef1a89c5c9d816a511f639becfaa33046c11da41d4fa4320dbcaa4a2f2fbee7`.
+The previous binary is preserved as
+`~/.local/bin/cli-proxy-api-reset-first.before-v8.0.69-20261113T081650046976Z`.
+Deployment used atomic binary replacement with automatic rollback on a failed
+smoke check. The private configuration, credential directory, service override
+and package-managed binary are unchanged.
+
+The previous 2026-11-09 upstream update was deployed as
 `8.0.61-soonest-reset-first-improved`, built from `e1486f06` on top of upstream
 v8.0.61 (`681ce41b`). The installed and running binary both have SHA-256
 `2498f06f4631f0ae7ae20bbea01c3a3ddafcc0d43c6e0e27d22d077fd9b45909`.
@@ -154,7 +165,9 @@ Then build:
 ```sh
 go test ./sdk/cliproxy/auth ./sdk/cliproxy ./internal/api/handlers/management
 go build -trimpath -ldflags="-s -w -X 'main.Version=X.Y.Z-soonest-reset-first-improved' -X 'main.Commit=<sha>+local-reset-routing'" -o /tmp/opencode/cli-proxy-api-reset-first ./cmd/server
-install -m755 /tmp/opencode/cli-proxy-api-reset-first ~/.local/bin/cli-proxy-api-reset-first
+cp -p ~/.local/bin/cli-proxy-api-reset-first ~/.local/bin/cli-proxy-api-reset-first.before-$(date -u +%Y%m%dT%H%M%SZ)
+install -m755 /tmp/opencode/cli-proxy-api-reset-first ~/.local/bin/cli-proxy-api-reset-first.new
+mv -f ~/.local/bin/cli-proxy-api-reset-first.new ~/.local/bin/cli-proxy-api-reset-first
 systemctl --user restart cli-proxy-api
 ```
 
@@ -167,6 +180,29 @@ The pre-activation configuration is backed up at
 `~/.cli-proxy-api/config.yaml.before-soonest-reset-first-20261026`.
 
 ## Validation
+
+2026-11-13 upstream update: all custom commits applied cleanly to v8.0.69.
+The full `GOMAXPROCS=4 go test -p 1 ./...` suite passed, as did the separate
+auth, service and management package run. Focused subscription-reset, routing,
+pinning, alias/cooldown and affinity tests passed 10 runs with `-race`.
+`go vet` passed for auth, service, config and management packages. Custom Go
+changes are gofmt clean; two unrelated upstream test helpers retain their
+upstream formatting rather than introducing formatting-only changes.
+
+Additional regression coverage verifies that forced cooldowns survive disabled
+ordinary cooling and configuration reloads, apply across case/thinking-suffix
+variants of a model, and leave passive subscription-reset observations intact.
+This runs with both bare and affinity-wrapped routing, for model- and
+credential-scoped failures. Zero/large weights do not override reset ranking.
+Upstream's non-weighted pinning matrix now also covers soonest-reset-first,
+including mixed-provider and affinity paths.
+
+Deployment verification: the service is active on `127.0.0.1:8317`, running the
+validated clean-source candidate with zero automatic restarts and four credential
+entries loaded. Authenticated `/v1/models` returned HTTP 200 with all 38 models
+available before the restart. The configuration checksum is unchanged;
+soonest-reset-first and one-hour session affinity remain enabled. No generation
+request was issued for the smoke check. The prior custom branches remain intact.
 
 2026-11-09 upstream update: both routing commits applied cleanly to v8.0.61.
 The server builds with Go 1.26.10, all Go files are gofmt clean, and `go vet`

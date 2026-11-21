@@ -122,7 +122,18 @@ or browser storage with the dashboard source.
 
 ## Local installation
 
-The 2026-11-13 upstream update is deployed as
+The 2026-11-21 Antigravity and dashboard update is deployed as
+`8.0.69-soonest-reset-first-improved`, built with Go 1.26.11 from `c9ad9447`.
+The installed and running binary both have SHA-256
+`18f69d188dee1068769a209b54e89a1b931739118b381ebcece427922ec6bd43`.
+The previous binary is preserved as
+`~/.local/bin/cli-proxy-api-reset-first.before-antigravity-variants-20261121T121318357007Z`.
+The authenticated model catalog now contains 68 models, retaining all 52 models
+from immediately before deployment. All 20 account-reported standard reasoning
+variants across Gemini and Claude were verified in the live catalog. The private
+configuration, credentials and service override were not changed by this update.
+
+The previous 2026-11-13 upstream update was deployed as
 `8.0.69-soonest-reset-first-improved`, built with Go 1.26.11 from `21a57dec`
 on top of upstream v8.0.69 (`f7ae8fee`). The installed and running binary both
 have SHA-256
@@ -216,6 +227,24 @@ The pre-activation configuration is backed up at
 `~/.cli-proxy-api/config.yaml.before-soonest-reset-first-20261026`.
 
 ## Validation
+
+2026-11-21 Antigravity update: the full Go suite passed on rerun; the initial
+run hit `TestServiceHeartbeatFailoverDoesNotDrainBlockingScope`'s one-second
+replacement-subscription deadline. The separate service suite passed and no Home
+implementation was changed. Focused discovery, variant registration, exact
+non-streaming/streaming request construction and soonest-reset-first tests passed
+10 runs with the race detector. `go vet` passed for auth and service packages.
+The server was built from a clean, committed worktree.
+
+All 10 portable dashboard regression checks passed. Chromium verified 35 actual
+provider quota readings, preserved Fable display, readable model names and model-ID
+tooltips, keyboard focus, viewport-contained tooltips, the 640px card height cap,
+scrollable quota panels, visible controls and scroll-position retention on updates.
+The installed page matches the committed asset, and automatic panel replacement
+is disabled in the existing private configuration. Service verification confirmed
+the correct candidate binary, zero automatic restarts, unchanged configuration
+checksum and HTTP 200 from the authenticated model catalog. No live generation
+request was used for validation.
 
 2026-11-13 upstream update: all custom commits applied cleanly to v8.0.69.
 The full `GOMAXPROCS=4 go test -p 1 ./...` suite passed, as did the separate

@@ -1,8 +1,8 @@
 # Soonest-reset-first routing
 
-Local addition, currently based on CLIProxyAPI v8.0.69 (f7ae8fee).
+Local addition, currently based on CLIProxyAPI v8.0.80 (f5c5681a).
 Originally written against v8.0.43 (30780351); re-applied cleanly on v8.0.52
-through v8.0.69, including the quota-availability improvements.
+through v8.0.80, including the quota-availability improvements.
 
 ```yaml
 routing:
@@ -169,7 +169,7 @@ The previous 2026-11-04 improvements were deployed as
 The pre-upgrade binary is preserved as
 `~/.local/bin/cli-proxy-api-reset-first.before-quota-improvements-20261104-160635-543514`.
 
-Source: `~/Projects/CLIProxyAPI`, branch `soonest-reset-first-v8.0.69`
+Source: `~/Projects/CLIProxyAPI`, branch `soonest-reset-first-v8.0.80`
 (the routing addition and subsequent improvements on top of the upstream tag;
 the v8.0.43 version is on branch `soonest-reset-first`).
 The previous binary is kept as `~/.local/bin/cli-proxy-api-reset-first.v8.0.43`.
@@ -185,8 +185,8 @@ Fork: [Siemko/CLIProxyAPI](https://github.com/Siemko/CLIProxyAPI).
 
 - `origin`: `git@github.com:Siemko/CLIProxyAPI.git` (personal fork, push destination).
 - `upstream`: `https://github.com/router-for-me/CLIProxyAPI.git` (original project).
-- Current custom branch: `soonest-reset-first-v8.0.69`.
-- Previous custom branch: `soonest-reset-first-v8.0.61`, preserved unchanged,
+- Current custom branch: `soonest-reset-first-v8.0.80`.
+- Previous custom branch: `soonest-reset-first-v8.0.69`, preserved unchanged,
   tracking its counterpart on `origin`. Older custom branches are also preserved.
 - Keep runtime configuration, client keys and OAuth credentials outside this
   repository. Publish source, tests and this operational guide only.
@@ -203,7 +203,7 @@ To move to a newer upstream tag:
 ```sh
 git fetch upstream --tags
 git switch -c soonest-reset-first-vX.Y.Z vX.Y.Z
-git cherry-pick v8.0.69..soonest-reset-first-v8.0.69
+git cherry-pick v8.0.80..soonest-reset-first-v8.0.80
 git push -u origin HEAD
 ```
 
@@ -227,6 +227,21 @@ The pre-activation configuration is backed up at
 `~/.cli-proxy-api/config.yaml.before-soonest-reset-first-20261026`.
 
 ## Validation
+
+2026-11-21 v8.0.80 upgrade: all custom routing, Antigravity variant and dashboard
+commits applied without conflicts. The candidate builds with Go 1.26.11, and all
+19 custom Go files are gofmt clean. `go vet` passed for SDK auth, routing/service,
+config and runtime executor packages. Focused reset-routing, model discovery,
+variant registration and exact normal/streaming request tests passed 10 runs
+with the race detector. All 10 dashboard regression checks passed.
+
+The full Go suite passed on rerun. As in the v8.0.69 validation, the first run
+hit only `TestServiceHeartbeatFailoverDoesNotDrainBlockingScope`'s one-second
+replacement-subscription deadline; the separate service suite then passed, as
+did the full rerun. No Home implementation or timing tests were modified locally.
+A read-only test using v8.0.80's config parser accepted the actual production
+configuration and retained soonest-reset-first, session affinity and custom-panel
+auto-update protection without modifying the configuration file.
 
 2026-11-21 Antigravity update: the full Go suite passed on rerun; the initial
 run hit `TestServiceHeartbeatFailoverDoesNotDrainBlockingScope`'s one-second

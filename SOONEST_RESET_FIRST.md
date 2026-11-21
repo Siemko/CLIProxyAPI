@@ -84,6 +84,42 @@ rollover-only discovery and one-hour bounded quota cooldown are not adopted.
 Without a usable reset, our soft exhaustion hint is trusted for only five minutes
 rather than assuming a full five-hour window.
 
+## Antigravity variants and custom dashboard
+
+Antigravity registration exposes the account-reported low, medium, high and
+xhigh variants of known model families, including reported tiered variants.
+The exact upstream model ID is retained through normal and streaming execution;
+these are not aliases that silently select the highest-effort model. Catalog
+metadata is inherited from the known family, while provider eligibility,
+credential exclusions, aliases, prefixes and soonest-reset-first routing retain
+their existing precedence. Unknown families, unreported variants, unsupported
+effort levels and provider-disabled models are not added.
+
+The custom dashboard source is `assets/management-custom.html`; its installed
+copy is `~/.cli-proxy-api/static/management.html`. It supports Claude/Fable,
+Codex and Antigravity live quota readings through credential-scoped management
+API calls. These checks do not issue generation requests. Antigravity quota
+meters use Google's per-model remaining fractions and reset timestamps. Newly
+added accounts receive one initial check without repeatedly probing on each poll.
+
+Long model names wrap above their meters; hover or keyboard focus reveals the
+full display name and model ID. Credential cards are capped at 640px, with an
+independently scrollable quota list and visible account controls. Scroll position
+survives polling updates.
+
+Run the dashboard regression checks with:
+
+```sh
+node --test test/management_dashboard_test.cjs
+```
+
+Back up the installed page before copying `assets/management-custom.html` into
+the private static directory. The existing `management.disable-auto-update-panel:
+true` setting protects this custom page from replacement by the upstream panel
+updater. Changes to the page do not require restarting the proxy; hard-refresh
+the browser after installing them. Never commit private configuration, credentials
+or browser storage with the dashboard source.
+
 ## Local installation
 
 The 2026-11-13 upstream update is deployed as

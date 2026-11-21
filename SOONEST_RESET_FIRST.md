@@ -122,7 +122,20 @@ or browser storage with the dashboard source.
 
 ## Local installation
 
-The 2026-11-21 Antigravity and dashboard update is deployed as
+The 2026-11-21 upstream update is deployed as
+`8.0.80-soonest-reset-first-improved`, built with Go 1.26.11 from `4cc20e04`
+on top of upstream v8.0.80 (`f5c5681a`). The installed and running binary both
+have SHA-256
+`36e5de01940c18e1051f2a70c370dcaec36c00ab24a83afb0403ad82bcc4121d`.
+The previous binary is preserved as
+`~/.local/bin/cli-proxy-api-reset-first.before-v8.0.80-20261121T123044671634Z`.
+Deployment used atomic replacement with automatic rollback on failed health or
+catalog validation. All 68 pre-upgrade models, including all 20 standard
+reasoning variants, remain in the authenticated model catalog. The configuration
+and installed custom dashboard checksums are unchanged. Previous custom branches
+remain available for rollback.
+
+The previous 2026-11-21 Antigravity and dashboard update was deployed as
 `8.0.69-soonest-reset-first-improved`, built with Go 1.26.11 from `c9ad9447`.
 The installed and running binary both have SHA-256
 `18f69d188dee1068769a209b54e89a1b931739118b381ebcece427922ec6bd43`.
@@ -242,6 +255,12 @@ did the full rerun. No Home implementation or timing tests were modified locally
 A read-only test using v8.0.80's config parser accepted the actual production
 configuration and retained soonest-reset-first, session affinity and custom-panel
 auto-update protection without modifying the configuration file.
+
+Upgrade verification confirmed the running executable matches the validated
+candidate, the systemd user service is active with zero automatic restarts, and
+authenticated `/v1/models` returns HTTP 200 with all 68 pre-upgrade models. Private
+configuration and the custom dashboard are byte-for-byte unchanged. No live
+generation request was used for this upgrade smoke check.
 
 2026-11-21 Antigravity update: the full Go suite passed on rerun; the initial
 run hit `TestServiceHeartbeatFailoverDoesNotDrainBlockingScope`'s one-second

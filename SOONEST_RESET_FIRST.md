@@ -120,6 +120,49 @@ updater. Changes to the page do not require restarting the proxy; hard-refresh
 the browser after installing them. Never commit private configuration, credentials
 or browser storage with the dashboard source.
 
+## OpenCode Antigravity 429 compatibility
+
+The 2026-11-21 OpenCode investigation reproduced Google's generic HTTP 429
+`RESOURCE_EXHAUSTED` response with the actual system instructions and tool
+schemas, even with generation capped at 128 tokens. The same tool schemas with
+a short prompt succeeded, as did a neutral system instruction of the same length.
+Clearing the proxy's retained cooldown alone did not resolve the actual workload.
+
+Changing only `tools.opencode.` to the equivalent JavaScript property access
+`tools["opencode"].` in the full system instruction made the native streaming
+request succeed. The provider's internal reason for rejecting the dotted form is
+not exposed by its generic error response. The installed configuration now uses
+the existing, opt-in Antigravity system-instruction replacement facility:
+
+```yaml
+oauth:
+  providers:
+    antigravity:
+      sensitive-words-replace:
+        'tools.opencode.': 'tools["opencode"].'
+```
+
+This changes notation only: exact tool IDs, model IDs, user messages and actual
+tool declarations are preserved. It applies only to Antigravity, does not remove
+instructions, and does not redirect models, disable cooling or enable paid-credit
+fallback. The running service hot-reloaded the rule without replacing the binary
+or restarting. This is a local compatibility workaround, not a provider default.
+
+The private configuration was backed up to
+`~/.cli-proxy-api/config.yaml.before-antigravity-opencode-namespace-20261121T130416217243Z`.
+A parsed comparison verified that this rule is the only configuration change.
+The live OpenAI-compatible streaming API then returned HTTP 200, a completed SSE
+response, and `OK` with the original 28,358-character system instruction and all
+13 tool schemas retained. That live diagnostic substituted only a short user
+turn requesting `OK`; the native capped probe retained the original user turn.
+No tools were executed. Private prompts, configuration and credentials are not
+included in the regression tests or committed source.
+
+The namespace regression covers both system-instruction field spellings, string
+and parts representations, unchanged user messages/tool declarations/model IDs,
+and idempotence. It passed 10 race-detector runs. The server compile check,
+`go vet` for executor helpers and all 10 dashboard checks also passed.
+
 ## Local installation
 
 The 2026-11-21 upstream update is deployed as

@@ -245,7 +245,10 @@ func ParseAntigravityModelCapabilityHints(body []byte) (AntigravityModelCapabili
 			return AntigravityModelCapabilityHints{}, false
 		}
 		modelIDs = make(map[string]struct{}, len(modelMap))
-		for id := range modelMap {
+		for id, model := range modelMap {
+			if model.Get("disabled").Bool() {
+				continue
+			}
 			if normalized := NormalizeAntigravityModelID(id); normalized != "" {
 				modelIDs[normalized] = struct{}{}
 			}

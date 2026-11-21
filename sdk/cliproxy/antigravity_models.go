@@ -556,7 +556,7 @@ func filterAntigravityModels(models []*ModelInfo, hints antigravityModelCapabili
 			}
 		}
 	}
-	return filtered
+	return appendAntigravityEffortVariants(filtered, models, hints)
 }
 
 func (s *Service) antigravityModelsForHints(auth *coreauth.Auth, hints antigravityModelCapabilityHints) []*ModelInfo {

@@ -288,6 +288,9 @@ func ParseAntigravityModelCapabilityHints(body []byte) (AntigravityModelCapabili
 		modelIDs = make(map[string]struct{}, len(modelMap))
 		modelEnums = make(map[string]string)
 		for id, entry := range modelMap {
+			if entry.Get("disabled").Bool() {
+				continue
+			}
 			if normalized := NormalizeAntigravityModelID(id); normalized != "" {
 				modelIDs[normalized] = struct{}{}
 			}

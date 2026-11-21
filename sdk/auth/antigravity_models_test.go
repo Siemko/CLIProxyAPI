@@ -36,6 +36,17 @@ func TestNormalizeAntigravityModelID(t *testing.T) {
 }
 
 func TestParseAntigravityModelCapabilityHints(t *testing.T) {
+	t.Run("disabled reasoning variants are not eligible", func(t *testing.T) {
+		body := []byte(`{"models":{"gemini-4-hydrogen-low":{"disabled":true},"gemini-4-hydrogen-medium":{"disabled":false},"gemini-4-hydrogen-xhigh":{}}}`)
+		hints, ok := ParseAntigravityModelCapabilityHints(body)
+		if !ok || len(hints.ModelIDs) != 2 {
+			t.Fatalf("unexpected catalog: hints=%+v ok=%t", hints, ok)
+		}
+		if _, exists := hints.ModelIDs["gemini-4-hydrogen-low"]; exists {
+			t.Fatal("disabled variant was eligible for registration")
+		}
+	})
+
 	t.Run("valid payload with models and web search", func(t *testing.T) {
 		body := []byte(`{"models":{"gemini-3-flash":{"displayName":"Gemini 3 Flash"},"claude-sonnet-5-5-medium":{"displayName":"Claude Sonnet 5.5"}},"webSearchModelIds":["gemini-3-flash"]}`)
 		hints, ok := ParseAntigravityModelCapabilityHints(body)

@@ -1314,6 +1314,8 @@ oauth:
       #   - "proxy"
       # sensitive-words-replace:      # optional: literal sensitive-word replacements ("target": "replacement") in system instructions
       #   "You are Codex, an agent based on GPT-5.": "You are a helpful coding assistant."
+      #   # Optional OpenCode compatibility: equivalent JS notation without changing tool IDs.
+      #   'tools.opencode.': 'tools["opencode"].'
       # sensitive-patterns-replace:   # optional: ordered Go RE2 regex replacements in system instructions (deleting flagged text with "" is recommended over obfuscation for Antigravity)
       #   - pattern: '(?m)^RFC 2119[^\n]*\n?'
       #     replacement: ""

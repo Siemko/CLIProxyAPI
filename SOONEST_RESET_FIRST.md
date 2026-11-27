@@ -1,8 +1,8 @@
 # Soonest-reset-first routing
 
-Local addition, currently based on CLIProxyAPI v8.0.80 (f5c5681a).
-Originally written against v8.0.43 (30780351); re-applied cleanly on v8.0.52
-through v8.0.80, including the quota-availability improvements.
+Local addition, currently based on CLIProxyAPI v8.1.8 (dbe641f2).
+Originally written against v8.0.43 (30780351); re-applied on v8.0.52 through
+v8.1.8, including the quota-availability improvements.
 
 ```yaml
 routing:
@@ -165,6 +165,20 @@ and idempotence. It passed 10 race-detector runs. The server compile check,
 
 ## Local installation
 
+The 2026-11-27 upstream update is deployed as
+`8.1.8-soonest-reset-first-improved`, built with Go 1.26.11 from `4b118c7e`
+on top of upstream v8.1.8 (`dbe641f2`). The installed and running binary both
+have SHA-256 `40d256933a08fa30ded5ec4af81f579dbe59895ba7690b5265e099e6c0ed9d92`.
+The previous binary and configuration are preserved as
+`~/.local/bin/cli-proxy-api-reset-first.before-v8.1.8-20261127T224442Z` and
+`~/.cli-proxy-api/config.yaml.before-v8.1.8-20261127T224442Z`.
+
+v8.1.8 rewrites `config.yaml` on load: it re-indents the file to two spaces and
+adds `server.server-id` (upstream `69607634`, persisted server identity). A
+parsed comparison confirmed no other key was added, removed or changed. The
+configuration checksum therefore changes with this upgrade; the custom dashboard
+is byte-for-byte unchanged.
+
 The 2026-11-21 upstream update is deployed as
 `8.0.80-soonest-reset-first-improved`, built with Go 1.26.11 from `4cc20e04`
 on top of upstream v8.0.80 (`f5c5681a`). The installed and running binary both
@@ -225,7 +239,7 @@ The previous 2026-11-04 improvements were deployed as
 The pre-upgrade binary is preserved as
 `~/.local/bin/cli-proxy-api-reset-first.before-quota-improvements-20261104-160635-543514`.
 
-Source: `~/Projects/CLIProxyAPI`, branch `soonest-reset-first-v8.0.80`
+Source: `~/Projects/CLIProxyAPI`, branch `soonest-reset-first-v8.1.8`
 (the routing addition and subsequent improvements on top of the upstream tag;
 the v8.0.43 version is on branch `soonest-reset-first`).
 The previous binary is kept as `~/.local/bin/cli-proxy-api-reset-first.v8.0.43`.
@@ -241,8 +255,8 @@ Fork: [Siemko/CLIProxyAPI](https://github.com/Siemko/CLIProxyAPI).
 
 - `origin`: `git@github.com:Siemko/CLIProxyAPI.git` (personal fork, push destination).
 - `upstream`: `https://github.com/router-for-me/CLIProxyAPI.git` (original project).
-- Current custom branch: `soonest-reset-first-v8.0.80`.
-- Previous custom branch: `soonest-reset-first-v8.0.69`, preserved unchanged,
+- Current custom branch: `soonest-reset-first-v8.1.8`.
+- Previous custom branch: `soonest-reset-first-v8.0.80`, preserved unchanged,
   tracking its counterpart on `origin`. Older custom branches are also preserved.
 - Keep runtime configuration, client keys and OAuth credentials outside this
   repository. Publish source, tests and this operational guide only.
@@ -259,7 +273,7 @@ To move to a newer upstream tag:
 ```sh
 git fetch upstream --tags
 git switch -c soonest-reset-first-vX.Y.Z vX.Y.Z
-git cherry-pick v8.0.80..soonest-reset-first-v8.0.80
+git cherry-pick v8.1.8..soonest-reset-first-v8.1.8
 git push -u origin HEAD
 ```
 
@@ -283,6 +297,36 @@ The pre-activation configuration is backed up at
 `~/.cli-proxy-api/config.yaml.before-soonest-reset-first-20261026`.
 
 ## Validation
+
+2026-11-27 v8.1.8 upgrade (319 upstream commits after v8.0.80): all custom
+commits applied; one conflict in `sdk/auth/antigravity_models.go`, where the
+disabled-model skip was merged into upstream's rewritten catalog parser. Upstream
+`bfed6e89` now keeps the canonical catalog when an account catalog is unknown;
+the variant test was updated to assert that no variants are invented in that case.
+
+Upstream `2f86992c` adds native Antigravity thinking-level routing. The model
+lists do not collide (variants are only added when not already present), and a
+request naming a variant without an explicit reasoning setting keeps that exact
+ID. A request naming a variant and also carrying a different explicit reasoning
+level is now switched by upstream to the matching level's variant.
+
+The candidate builds with Go 1.26.11; custom Go files are gofmt clean and
+`go vet` passed for auth, service, config, management and executor packages.
+All 24 custom tests passed 10 runs with `-race`, all 10 dashboard checks passed,
+and the full `GOMAXPROCS=4 go test -p 1 ./...` suite passed on the first run.
+v8.1.8's config loader accepted a copy of the production configuration, keeping
+soonest-reset-first, one-hour affinity and panel auto-update protection.
+
+Before deployment the candidate ran on a separate port with a copy of the
+configuration and a fake credential; the dashboard loaded, masked emails and
+round-tripped the enable/disable toggle without console errors. Deployment used
+atomic replacement with automatic rollback on failed health. After restart the
+service is active with zero automatic restarts, runs the validated binary, loads
+all 5 credential files, listens on loopback and Tailscale, and authenticated
+`/v1/models` returns HTTP 200 with all 71 pre-upgrade models. The only startup
+warning, `refresh_token_invalidated`, comes from the already-disabled, expired
+duplicate Codex credential and predates this upgrade. No live generation request
+was used for validation.
 
 2026-11-21 v8.0.80 upgrade: all custom routing, Antigravity variant and dashboard
 commits applied without conflicts. The candidate builds with Go 1.26.11, and all

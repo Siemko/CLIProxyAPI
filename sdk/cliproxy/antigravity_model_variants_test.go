@@ -46,8 +46,10 @@ func TestAntigravityEffortVariantsRequireAccountAndKnownFamily(t *testing.T) {
 	if template.ID != "gemini-4-hydrogen-xhigh" || template.Thinking.Levels[0] != "low" {
 		t.Fatal("variant registration mutated the canonical catalog")
 	}
-	if got := filterAntigravityModels([]*ModelInfo{template}, antigravityModelCapabilityHints{}); len(got) != 0 {
-		t.Fatalf("unknown account catalog exposed models: %v", got)
+	// Upstream keeps the canonical catalog when the account catalog is unknown;
+	// no account-reported variants may be invented in that case.
+	if got := filterAntigravityModels([]*ModelInfo{template}, antigravityModelCapabilityHints{}); len(got) != 1 || got[0] != template {
+		t.Fatalf("unknown account catalog changed the canonical catalog: %v", got)
 	}
 	limited := *template
 	limited.Thinking = &registry.ThinkingSupport{Levels: []string{"high"}}
